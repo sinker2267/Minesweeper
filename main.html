@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .parent{
+            margin: auto;
+            width: 300px;
+            height: 300px;
+        }
+        .child{
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            font-size: small;
+        }
+    </style>
+</head>
+<body>
+    <table id="parent" border="1" class="parent" >
+        <td id="useTime" colspan="4"style="text-align: center">地雷总数10</td>
+        <td id="start" colspan="2" style="text-align: center" onclick="startOnclick()">Start</td>
+        <td id="surMines" colspan="4">已标记地雷0</td>
+    </table>
+<script type = "text/javascript">
+    var minesJud = new Array(100).fill(0);
+    var vis = new Array(100).fill(0);
+    var dic = [-1,1,10,9,11,-10,-9,-11];
+    var autoDic = [-1,1,10,-10];
+    var all = 100;
+    var allMines = 10;
+    var visRight = new Array(100).fill(0);
+    function onMouseRight(id){
+        var flagMines = document.getElementById("surMines");
+        if(visRight[id] == 1 && all > 0){
+            document.getElementById(id).innerHTML = "";
+            vis[id] = 0;
+            visRight[id] = 0;
+            allMines++;
+            flagMines.innerText = "已标记地雷"+(10 - allMines);
+        }
+        else{
+            if(vis[id] == 0){
+                vis[id] = 1;
+                visRight[id] = 1;
+                all--;
+                allMines--;
+                var td = document.getElementById(id);
+                var img = document.createElement("img");
+                img.src = "picture/1.png";
+                img.style = "width: 90%;height: 80%;";
+                td.appendChild(img);
+                flagMines.innerText = "已标记地雷"+(10 - allMines);
+            }
+        }
+        if(allMines == 0){
+            var cnt = 0;
+            for(var i = 0; i < 100; i++){
+                if(minesJud[i] == 1 && flagMines[i] == 1){
+                    cnt++;
+                }
+            }
+            if(cnt == 10){
+                alert("You wim!");
+                for(var i = 0; i < 100; i++){
+                    vis[i] = 1;
+                }
+                all = 0;
+            }
+        }
+
+    }
+    function getMinesNum(id){
+        var minesNum = 0;
+        for(var i = 0; i < 8; i++){
+            var tmp = parseFloat(id) + parseFloat(dic[i]);
+            if(tmp >= 0 && tmp < 100){
+                if(minesJud[tmp] == 1) minesNum++;
+            }
+        }
+        return minesNum;
+    }
+    function init(){
+        minesJud = minesJud.fill(0);
+        vis = vis.fill(0);
+        all = 100;
+        allMines = 10;
+        visRight = visRight.fill(0);
+        var parent = document.getElementById("parent");
+        for(var i = 0; i < 10; i++){
+            var k = Math.round(Math.random()*100);
+            while (minesJud[k] == 1 || k % 10 == 0 || k % 10 == 9){
+                k = Math.round(Math.random()*100);
+            }
+            minesJud[k] = 1;
+        }
+        for (let i = 0; i < 10; i++) {
+            var tr = document.createElement("tr");
+            for (let j = 0; j < 10; j++) {
+                var isMines = 0;
+                var id = i*10+j
+                if(minesJud[id] == 1) isMines = 1;oncontextmenu="onMouseRight()"
+                tr.innerHTML += "<td id='"+ id+"'class='child' onclick=onClick('"+id+"') oncontextmenu='onMouseRight("+id+")'></td>";
+                tr.style = "background-color: #acacab;"
+            }
+            parent.appendChild(tr);
+        }
+    }
+    function startOnclick(){
+        var start = document.getElementById("start");
+        if(start.innerText == "Restart"){
+            location.reload();
+        }
+    }
+    function autoDeleteMines(id){
+        var autoMinues = [id];
+        var autoNum = Math.round(Math.random()*(all/2));
+        var start = 0;
+        while (autoMinues.length < autoNum){
+            var tmp = autoMinues[start++];
+            var len = autoMinues.length;
+            for(var i = 0; i < 4; i++){
+                var l = parseFloat(tmp) + parseFloat(autoDic[i]);
+                if(l >=0 && l < 100 && minesJud[l] == 0 && vis[l] == 0){
+                    autoMinues[autoMinues.length] = l;
+                    var tdTmp = document.getElementById(l.toString());
+                    tdTmp.style = "background-color: #e8e7e7;";
+                    tdTmp.innerText = getMinesNum(l);
+                    vis[l] = 1;
+                    all--;
+                }
+            }
+            if(autoMinues.length == len) return;
+        }
+    }
+    function onClick(id){
+        if(vis[id] == 1) return;
+        vis[id] = 1;
+        var start = document.getElementById("start");
+        start.innerText = "Restart";
+        all--;
+        if(minesJud[id] == 1){
+            var td = document.getElementById(id);
+            td.innerHTML = "";
+            var img = document.createElement("img");
+            img.src = "picture/3.png";
+            img.style = "width: 90%;height: 80%;";
+            td.appendChild(img);
+            for(var i = 0; i < 100; i++){
+                if(minesJud[i] == 1 && i != id){
+                    vis[i] = 1;
+                    all--;
+                    td = document.getElementById(i);
+                    td.innerHTML = "";
+                    img = document.createElement("img");
+                    img.src = "picture/2.png";
+                    img.style = "width: 90%;height: 80%;";
+                    td.appendChild(img);
+                }
+            }
+            for(var i = 0; i < 100; i++){
+                vis[i] = 1;
+            }
+            all = 0;
+        }
+        else{
+            var td = document.getElementById(id);
+            td.style = "background-color: #e8e7e7;";
+            td.innerText = getMinesNum(id);
+            autoDeleteMines(id);
+        }
+    }
+    window.onload = function (){
+        document.oncontextmenu = function(e){
+            e.preventDefault();
+        };
+        init();
+    }
+</script>
+</body>
+</html>
